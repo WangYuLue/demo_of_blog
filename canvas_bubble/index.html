@@ -21,44 +21,58 @@
                 redBubble = new Image(),
                 n = 20   ,   //蓝色泡泡的数量
                 arr = [], //储存蓝色泡泡的array
-                redBubbleRadius = 60, //红色泡泡的半径
-                maxRadius = 60, //泡泡的最大半径
-                minRadius = 30, //泡泡的最小半径
+                maxRadius = 80, //泡泡的最大半径
+                minRadius = 40, //泡泡的最小半径
+                redBubbleRadius = 80, //红色泡泡的半径
                 canvasWidth = 800, //画布的宽度
                 canvasHeight = 600, //画布的高度
-                maxSpeed = 50 , //泡泡的最大速度（x,y向量坐标速度）
-                minSpeed = 30 , //泡泡的最小速度（x,y向量坐标速度）
+                maxSpeed = 80 , //泡泡的最大速度（x,y向量坐标速度）
+                minSpeed = 50 , //泡泡的最小速度（x,y向量坐标速度）
                 current_point = {
                     x: null, //当前鼠标x
                     y: null  //当前鼠标y
                 };
-
-            // window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame ||
+            //定时刷新方法
             var refresh = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function(func) {
                 window.setTimeout(func, 1000/60);
             };
 
-            //定义画布大小
-            the_canvas.width = canvasWidth || window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
-            the_canvas.height = canvasHeight || window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-            //加载泡泡
-            blueBubble.src = './img/blue-bubble.png';
-            redBubble.src = './img/red-bubble.png';
+            init();
+            getBubbles();
+            //图片加载完成后，开始绘画
+            blueBubble.onload = function(){
+                drawBubble();
+            };
 
             //生成指定个蓝圈圈，外加一个红圈圈
-            for(var i=0;i<=n;i++){
-                var obj ;
-                if(i===n){
-                    obj = getBubble(redBubbleRadius) ;
-                    obj.type = 'red' ;
-                    if(!noRepeat (obj,arr)){
-                        i -- ;
-                        continue ;
+            function getBubbles(){
+                for(var i=0;i<=n;i++){
+                    var obj ;
+                    if(i===n){
+                        obj = getBubble(redBubbleRadius) ;
+                        obj.type = 'red' ;
+                        /*这段代码的本意是防止在初始化时红圈圈与蓝圈圈以外重叠在一起，
+                         * 但是有了下面 momentum下两行特殊的处理代码，这一段代码已经没有必要了。*/
+
+                        /*  if(!noRepeat (obj,arr)){
+                                i -- ;
+                                continue ;
+                            }  */
+                    }else{
+                        obj = getBubble() ;
                     }
-                }else{
-                    obj = getBubble() ;
+                    arr.push(obj);
                 }
-                arr.push(obj);
+            }
+
+            //定义画布大小以及加载图片资源文件
+            function init(){
+                //定义画布大小
+                the_canvas.width = canvasWidth || window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+                the_canvas.height = canvasHeight || window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+                //加载泡泡
+                blueBubble.src = './img/blue-bubble.png';
+                redBubble.src = './img/red-bubble.png';
             }
 
             //随机生成小圆圈的方法，传入一个半径，如果不传，则半径大小随机生成
@@ -97,11 +111,6 @@
                 current_point.y = e.layerY;
             };
 
-            //图片加载完成后，开始绘画
-            blueBubble.onload = function(){
-                drawBubble();
-            };
-
             //为了算这个动画我又拾起了高中的动量守恒定律
             function momentum (a1,a2) {
                 var x_dist, y_dist, dist,m1,m2,vx1,vy1,vx2,vy2;
@@ -109,12 +118,12 @@
                 y_dist = a1.y - a2.y; //y轴距离 n
                 dist = x_dist * x_dist + y_dist * y_dist; //总距离的平方
                 if(Math.pow(a1.radius+a2.radius,2)-dist>0){
+                    /*下面两行的代码的作用是：防止红圈圈与蓝圈圈粘在一起；
+                     * 由于动画的刷新频率有限，当用鼠标移动红圈圈速度过快时，
+                     * 有可能红圈圈与蓝圈圈会重叠在一起，如果遇到这种情况，则把蓝圈圈移到红圈圈的外边*/
                     var temp = Math.sqrt(Math.pow(a1.radius+a2.radius,2)-y_dist * y_dist) ;
-                    if(a1.x - a2.x>0){
-                        a1.x = a2.x+temp ;
-                    }else{
-                        a1.x = a2.x-temp ;
-                    }
+                    a1.x - a2.x>0?a1.x=a2.x+temp:a1.x=a2.x-temp ;
+                    /***end***/
                     m1 = Math.pow(a1.radius,2) ;
                     m2 = Math.pow(a2.radius,2) ;
                     vx1 = a1.vx ;
